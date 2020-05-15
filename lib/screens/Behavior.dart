@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'dart:collection';
 import 'package:provider/provider.dart';
+import 'package:smarthome_pad/utils/enums.dart';  
 
 import '../utils/BehaviorStep.dart';
 import '../widgets/BehaviorRow.dart';
 import '../widgets/Menu.dart';
 import '../Store.dart';
 import '../widgets/BehaviorStepCard.dart';
+import '../widgets/AddEventDialog.dart';
+import '../widgets/AddGroupDialog.dart';
+import '../widgets/AttachActionOrGroupDialog.dart';
 
 class BehaviorScreen extends StatefulWidget {
   BehaviorScreen({Key key}) : super(key: key);
@@ -20,7 +24,7 @@ class BehaviorScreen extends StatefulWidget {
 
 class _BehaviorScreenState extends State<BehaviorScreen> {
   LinkedHashMap<String, List<BehaviorStep>> board;
-  bool codeView = false;
+  LinkedHashMap<String, List<BehaviorStep>> localBoard;
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +44,7 @@ class _BehaviorScreenState extends State<BehaviorScreen> {
       });
     }
 
-    buildKanbanList(String listId, List<BehaviorStep> items) {
+    buildKanbanList(String listId, List<BehaviorStep> items, { FlowType flowType }) {
       return SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
@@ -51,40 +55,69 @@ class _BehaviorScreenState extends State<BehaviorScreen> {
               width: MediaQuery.of(context).size.width,
               height: 80,
                 child: Container(
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    shrinkWrap: true,
-                    itemCount: items.length,
-                    itemBuilder: (BuildContext context, int index) {
-                      // A stack that provides:
-                      // * A draggable object
-                      // * An area for incoming draggables
-                      return Stack(
-                        children: [
-                          LongPressDraggable<BehaviorStep>(
-                            data: items[index],
-                            child: BehaviorRow(
-                              item: items[index],
-                            ), // A card waiting to be dragged
-                            childWhenDragging: Opacity(
-                              // The card that's left behind
-                              opacity: 0.2,
-                              child: BehaviorRow(item: items[index]),
-                            ),
-                            feedback: Container(
-                              // A card floating around
-                              height: widget.tileHeight,
-                              width: widget.tileWidth,
-                              child: FloatingWidget(
-                                  child: BehaviorRow(
-                                item: items[index],
-                              )),
-                            ),
+                  child: Row(
+                    children: [
+                      ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        shrinkWrap: true,
+                        itemCount: items.length,
+                        itemBuilder: (BuildContext context, int index) {
+                          // A stack that provides:
+                          // * A draggable object
+                          // * An area for incoming draggables
+                          return Stack(
+                            children: [
+                              LongPressDraggable<BehaviorStep>(
+                                data: items[index],
+                                child: BehaviorRow(
+                                  item: items[index],
+                                ), // A card waiting to be dragged
+                                childWhenDragging: Opacity(
+                                  // The card that's left behind
+                                  opacity: 0.2,
+                                  child: BehaviorRow(item: items[index]),
+                                ),
+                                feedback: Container(
+                                  // A card floating around
+                                  height: widget.tileHeight,
+                                  width: widget.tileWidth,
+                                  child: FloatingWidget(
+                                      child: BehaviorRow(
+                                    item: items[index],
+                                  )),
+                                ),
+                              ),
+                              buildItemDragTarget(listId, index, widget.tileHeight),
+                            ],
+                          );
+                        },
+                      ),
+                      SizedBox(
+                        width: 50,
+                        height: 50,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.all(Radius.circular(5)),
                           ),
-                          buildItemDragTarget(listId, index, widget.tileHeight),
-                        ],
-                      );
-                    },
+                          child: IconButton(
+                            icon: Icon(
+                              Icons.add,
+                              size: 30,
+                              color: Colors.grey[800],
+                            ),
+                            onPressed: () {
+                              showDialog(
+                                context: context,
+                                child: AttachActionOrGroupDialog(
+                                  eventOrGroup: listId
+                                )
+                              );
+                            }, 
+                          ),
+                        ),
+                      )
+                    ],
                   ),
                 ),
             ),
@@ -98,17 +131,6 @@ class _BehaviorScreenState extends State<BehaviorScreen> {
       backgroundColor: Colors.blueGrey,
       appBar: AppBar(
         title: Text('Behavior'),
-        /*actions: <Widget>[
-          // action button
-          IconButton(
-            icon: Icon(Icons.code),
-            onPressed: () {
-              this.setState(() {
-                this.codeView = !this.codeView;
-              });
-            },
-          ),
-        ],*/
       ),
       body: Column(
         children: [
@@ -121,20 +143,33 @@ class _BehaviorScreenState extends State<BehaviorScreen> {
                 ),
                 Spacer(),
                 RaisedButton(
-                  child: Text('Add Timeline'),
+                  child: Text('Add Event'),
                   onPressed: () {
+                    showDialog(
+                      context: context,
+                      child: AddEventDialog(flowType: FlowType.Shared)
+                    );
                   }
                 ),
                 Padding(
-                  padding: EdgeInsets.only(left: 10),
-                child: RaisedButton(
+                  padding: EdgeInsets.only(left: 10, right: 10),
+                    child: RaisedButton(
+                    child: Text('Add Action Group'),
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        child: AddGroupDialog(flowType: FlowType.Shared)
+                      );
+                    }
+                  ),
+                ),
+                RaisedButton(
                   child: Text('Apply'),
                   onPressed: () {
-                    S().confirm(context, 'Updating the shared system behavior may take several seconds.', () {
+                    S().confirm(context, 'Do you really wish to update the shared system behavior?', () {
                       S().applySharedFlow(this.board);
                     });
                   }
-                ),
                 ),
               ],
             ),
@@ -159,7 +194,7 @@ class _BehaviorScreenState extends State<BehaviorScreen> {
                               color: Colors.blueGrey[600] 
                             ),
                           ),
-                          buildKanbanList(key, board[key])
+                          buildKanbanList(key, board[key], flowType: FlowType.Shared)
                         ]
                       )
                     ),
@@ -171,8 +206,46 @@ class _BehaviorScreenState extends State<BehaviorScreen> {
           Container(
             alignment: Alignment.centerLeft,
             margin: EdgeInsets.only(left: 12, top: 20, right: 10),
-            child: Text('Local',
-              style: Theme.of(context).textTheme.headline1,
+            child: 
+          Container(
+            margin: EdgeInsets.only(left: 12, top: 20, right: 10),
+            child: Row(
+              children: [
+                Text('Local',
+                  style: Theme.of(context).textTheme.headline1,
+                ),
+                Spacer(),
+                /*RaisedButton(
+                  child: Text('Add Event'),
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      child: AddEventDialog(flowType: FlowType.Local)
+                    );
+                  }
+                ),
+                Padding(
+                  padding: EdgeInsets.only(left: 10, right: 10),
+                    child: RaisedButton(
+                    child: Text('Add Action Group'),
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        child: AddGroupDialog(flowType: FlowType.Local)
+                      );
+                    }
+                  ),
+                ),*/
+                RaisedButton(
+                  child: Text('Apply'),
+                  onPressed: () {
+                    S().confirm(context, 'Do you really wish to update the local system behavior?', () {
+                      S().applySharedFlow(this.board);
+                    });
+                  }
+                ),
+                ],
+              ),
             ),
           ),
         ],
@@ -312,7 +385,7 @@ class _BehaviorScreenState extends State<BehaviorScreen> {
 class FloatingWidget extends StatelessWidget {
   final Widget child;
 
-  const FloatingWidget({Key key, this.child}) : super(key: key);
+  const FloatingWidget({ Key key, this.child }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

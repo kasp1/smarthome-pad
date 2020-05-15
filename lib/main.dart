@@ -47,6 +47,7 @@ class AppState extends State<App> {
              textTheme: ButtonTextTheme.primary
           ),
            cursorColor: Colors.white,
+           canvasColor: Colors.blueGrey,
         ),
         navigatorKey: S().navigatorKey,
         initialRoute: '/',

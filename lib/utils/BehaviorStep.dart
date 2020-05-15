@@ -1,4 +1,5 @@
 import '../Store.dart';
+import '../utils/enums.dart';
 
 class BehaviorStep {
   final String id;

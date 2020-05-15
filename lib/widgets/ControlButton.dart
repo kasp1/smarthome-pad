@@ -73,9 +73,7 @@ class _ControlButtonState extends State<ControlButton> {
                     this.widget.screenState.tiles.remove(this.widget);
                   });
 
-                  this.widget.screenState.updateButtonList();
-
-                  S().syncLocalEvents();
+                  S().removeLocalEvent(this.widget.id);
                 });
               },
             ),

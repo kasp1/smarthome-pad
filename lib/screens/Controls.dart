@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:reorderables/reorderables.dart';
@@ -28,7 +26,7 @@ class ControlsScreenState extends State<ControlsScreen> {
     super.dispose();
   }
 
-  @override
+  /*@override
   void initState() {
     super.initState();
 
@@ -48,22 +46,17 @@ class ControlsScreenState extends State<ControlsScreen> {
       ControlButton(title: 'Garáž Vrata', id: 'LocalGarazVrata', screenState: this),
       ControlButton(title: 'Světla Veranda', id: 'LocalSvetlaVeranda', screenState: this),
     ];*/
-  }
-
-  void updateButtonList() {
-    Map<String, String> newLocalEvents = Map();
-
-    this.tiles.forEach((ControlButton button) {
-      newLocalEvents[button.id] = button.title;
-    });
-
-    S().setPers('local-events', jsonEncode(newLocalEvents));
-    S().syncLocalEvents();
-  }
+  }*/
 
   @override
   Widget build(BuildContext context) {
     S provider = Provider.of<S>(context);
+
+    if (provider.localEvents != null) {
+      provider.localEvents.forEach((eventId) {
+        this.tiles.add(ControlButton(title: eventId.titleCase, id: eventId, screenState: this));
+      });
+    }
 
     var wrap = ReorderableWrap(
       spacing: 8.0,
@@ -71,12 +64,15 @@ class ControlsScreenState extends State<ControlsScreen> {
       padding: const EdgeInsets.all(8),
       children: tiles,
       onReorder: (int oldIndex, int newIndex) {
-        setState(() {
+        ControlButton tile = tiles[oldIndex];
+
+        S().localEvents.removeAt(oldIndex);
+        S().localEvents.insert(newIndex, tile.id);
+
+        /*setState(() {
           Widget row = tiles.removeAt(oldIndex);
           tiles.insert(newIndex, row);
-        });
-
-        this.updateButtonList();
+        });*/
       },
       onNoReorder: (int index) {
         //this callback is optional
@@ -127,16 +123,7 @@ class ControlsScreenState extends State<ControlsScreen> {
                         onPressed: () {
                           if (buttonTitleController.text.isNotEmpty) {
                             Navigator.of(context).pop();
-
-                            this.tiles.add(
-                              ControlButton(
-                                title: buttonTitleController.text,
-                                id: 'Local_' + buttonTitleController.text.pascalCase,
-                                screenState: this
-                              )
-                            );
-
-                            this.updateButtonList();
+                            S().addLocalEvent(buttonTitleController.text.pascalCase);
                           }
                         },
                       ),

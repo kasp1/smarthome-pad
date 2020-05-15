@@ -6,10 +6,9 @@ class BehaviorRow extends StatelessWidget {
   final BehaviorStep item;
 
   const BehaviorRow({ Key key, this.item }) : super(key: key);
-  BehaviorStepCard makeListTile(BehaviorStep item) => BehaviorStepCard(id: item.id, step: item);
 
   @override
   Widget build(BuildContext context) {
-    return makeListTile(item);
+    return BehaviorStepCard(id: this.item.id, step: this.item);
   }
 }

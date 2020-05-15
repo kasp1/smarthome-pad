@@ -5,8 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
 import 'package:websocket/websocket.dart';
 import 'utils/BehaviorStep.dart';
-
-enum BehaviorStepType { action, group, event, add }
+import 'utils/enums.dart';
 
 
 class S with ChangeNotifier {
@@ -14,8 +13,11 @@ class S with ChangeNotifier {
   BuildContext context;
 
   Map<String, dynamic> sharedFlow;
-  Map<String, dynamic> localFlow;
   Map<String, dynamic> modules;
+
+  List<String> localEvents;
+  // List<String> localGroups; // Decided groups will be only global / shared (and local flow will be able to call global groups)
+  Map<String, String> localFlow;
 
   bool headlessMode = false;
 
@@ -36,12 +38,32 @@ class S with ChangeNotifier {
 
   }
 
-  void syncLocalEvents() {
+  void loadEvents() {
     if (S().getPers('local-events') != false) {
-      Map<String, dynamic> localEvents = jsonDecode(S().getPers('local-events'));
-
-      // TODO: sync with local flow
+      this.localEvents = jsonDecode(S().getPers('local-events'));
     }
+  }
+
+  void addLocalEvent(String title) {
+    this.localEvents.add(title);
+    this.saveLocalEvents();
+  }
+
+  void removeLocalEvent(String title) {
+    this.localEvents.remove(title);
+    this.saveLocalEvents();
+  }
+
+  void saveLocalEvents() {
+    this.setPers('local-events', jsonEncode(this.localEvents));
+  }
+
+  void addFlowStep(String eventOrGroup, String actionId, { Map<String, String> paramValues }) {
+    //print(eventOrGroup);
+    //print(actionId);
+    //print(paramValues);
+
+    // now we have to iterate over both shared and local flows and add the action where eventOrGroup matches the id
   }
 
   //
@@ -59,10 +81,12 @@ class S with ChangeNotifier {
           case BehaviorStepType.action:
             newFlow[eventOrGroup][step.id] = Map();
 
-            if (step.params.isNotEmpty) {
+            if (step.params != null) {
               step.params.forEach((param, value) {
                 newFlow[eventOrGroup][step.id][param] = value;
               });
+            } else {
+              newFlow[eventOrGroup][step.id] = null;
             }
 
             break;

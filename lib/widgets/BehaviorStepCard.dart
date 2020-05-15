@@ -4,6 +4,7 @@ import 'package:recase/recase.dart';
 
 import '../Store.dart';
 import '../utils/BehaviorStep.dart';
+import '../utils/enums.dart';
 
 // The list header (static)
 class BehaviorStepCard extends StatelessWidget {

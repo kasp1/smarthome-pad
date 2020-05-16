@@ -106,7 +106,7 @@ class _ConnectScreenState extends State<ConnectScreen> {
                             S().setPers('auto-reconnect', value.toString());
                           },
                         ),
-                        Text('Auto-reconnect on restart',
+                        Text('Auto-reconnect',
                           style: TextStyle(color: Colors.grey[800])
                         )
                       ],

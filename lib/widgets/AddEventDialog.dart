@@ -5,7 +5,7 @@ import '../Store.dart';
 import '../utils/DropDownFieldWrapper.dart';
 
 class AddEventDialog extends StatefulWidget {
-  AddEventDialog({ Key key, this.flowType }) : super(key: key);
+  AddEventDialog({ Key key }) : super(key: key);
   FlowType flowType;
 
   @override
@@ -18,21 +18,15 @@ class _AddEventDialogState extends State<AddEventDialog> {
 
   @override
   Widget build(BuildContext context) {
-    if (this.widget.flowType == FlowType.Shared) {
-      S().modules.forEach((String id, module) {
-        if (module is Map) {
-          if (module['events'] != null) {
-            for(int i = 0; i < module['events'].length; i++){
-              this.options[id + '_' + module['events'][i]] = (module['events'][i]).toString().titleCase;
-            }
+    S().modules.forEach((String id, module) {
+      if (module is Map) {
+        if (module['events'] != null) {
+          for(int i = 0; i < module['events'].length; i++){
+            this.options[id + '_' + module['events'][i]] = (module['events'][i]).toString().titleCase;
           }
         }
-      });
-    } else {
-      S().localEvents.asMap().forEach((i, value) {
-        this.options[i.toString()] = value;
-      });
-    }
+      }
+    });
 
     return AlertDialog(
       title: Text('Add an Event'),
@@ -52,18 +46,18 @@ class _AddEventDialogState extends State<AddEventDialog> {
               });
             }
           ),
-          if ((this.widget.flowType == FlowType.Shared && S().sharedFlow.containsKey(this.selectedEvent))
-            || (this.widget.flowType == FlowType.Local && S().localFlow.containsKey(this.selectedEvent)))
-            Container(
-              margin: EdgeInsets.all(30),
-              decoration: BoxDecoration(
-                color: Colors.red[200]
-              ),
-              padding: EdgeInsets.all(20),
-              child: Text("This event is already present the in the behavior chart. If there is already too many actions present this event's timeline, please consider grouping actions.",
-                style: TextStyle(color: Colors.white),
-              )
+          if (S().sharedFlow != null)
+          if (S().sharedFlow.containsKey(this.selectedEvent))
+          Container(
+            margin: EdgeInsets.all(30),
+            decoration: BoxDecoration(
+              color: Colors.red[200]
+            ),
+            padding: EdgeInsets.all(20),
+            child: Text("This event is already present the in the behavior chart. If there is already too many actions present this event's timeline, please consider grouping actions.",
+              style: TextStyle(color: Colors.white),
             )
+          )
         ],
       ),
       actions: [
@@ -77,16 +71,14 @@ class _AddEventDialogState extends State<AddEventDialog> {
           child: Text('Add'),
           onPressed: () {
             if (this.selectedEvent != null) {
-              if (this.widget.flowType == FlowType.Shared) {
+              Navigator.of(context).pop();
+
+              if (S().sharedFlow != null) {
                 if (!S().sharedFlow.containsKey(this.selectedEvent)) {
-                  Navigator.of(context).pop();
-                  S().sharedFlow[this.selectedEvent] = null;
+                  S().addSharedEvent(this.selectedEvent);
                 }
-              }
-            } else {
-              if (!S().localFlow.containsKey(this.selectedEvent)) {
-                Navigator.of(context).pop();
-                S().localFlow[this.selectedEvent] = null;
+              } else {
+                S().addSharedEvent(this.selectedEvent);
               }
             }
           }

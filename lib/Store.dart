@@ -12,12 +12,16 @@ class S with ChangeNotifier {
 
   BuildContext context;
 
+  //
+  //  Behavior
+  //
+
   Map<String, dynamic> sharedFlow;
   Map<String, dynamic> modules;
 
-  List<String> localEvents;
+  // List<String> localEvents;
   // List<String> localGroups; // Decided groups will be only global / shared (and local flow will be able to call global groups)
-  Map<String, String> localFlow;
+  Map<String, dynamic> localFlow = {};
 
   bool headlessMode = false;
 
@@ -32,74 +36,97 @@ class S with ChangeNotifier {
   void toggleHeadless() {
     this.headlessMode = !this.headlessMode;
     this.setPers('headless-mode', this.headlessMode.toString());
+    this.notifyListeners();
+  }
+
+  void turnHeadlessOn(bool onOff) {
+    this.headlessMode = onOff;
+    this.setPers('headless-mode', this.headlessMode.toString());
+    this.notifyListeners();
   }
 
   void triggerLocalEvent(String id) {
-
+    print('Local event triggered');
   }
 
-  void loadEvents() {
-    if (S().getPers('local-events') != false) {
-      this.localEvents = jsonDecode(S().getPers('local-events'));
+  void loadLocalFlow() {
+    if (S().getPers('local-flow') != false) {
+      this.localFlow = jsonDecode(S().getPers('local-flow'));
+      this.notifyListeners();
+    } else {
+      // no local behavior has been defined on this device yet
+      this.send('loadDefaultLocalFlow');
     }
   }
 
   void addLocalEvent(String title) {
-    this.localEvents.add(title);
-    this.saveLocalEvents();
+    this.localFlow[title] = null;
+    this.saveLocalFlow();
+    this.notifyListeners();
+  }
+
+  void addSharedEvent(String id) {
+    this.sharedFlow = this.sharedFlow ?? {};
+
+    this.sharedFlow[id] = null;
+    this.notifyListeners();
   }
 
   void removeLocalEvent(String title) {
-    this.localEvents.remove(title);
-    this.saveLocalEvents();
+    this.localFlow.remove(title);
+    this.saveLocalFlow();
+    this.notifyListeners();
   }
 
-  void saveLocalEvents() {
-    this.setPers('local-events', jsonEncode(this.localEvents));
+  void saveLocalFlow() {
+    this.setPers('local-flow', jsonEncode(this.localFlow));
   }
 
-  void addFlowStep(String eventOrGroup, String actionId, { Map<String, String> paramValues }) {
+  void saveDefaultLocalFlow() {
+    this.send('updateDefaultLocalFlow', data: this.localFlow);
+  }
+
+  void loadDefaultLocalFlow() {
+    this.send('loadDefaultLocalFlow');
+  }
+
+  void addSharedFlowStep(String eventOrGroup, String actionOrGroupId, { Map<String, String> paramValues }) {
     //print(eventOrGroup);
     //print(actionId);
     //print(paramValues);
 
-    // now we have to iterate over both shared and local flows and add the action where eventOrGroup matches the id
+    if (this.sharedFlow[eventOrGroup] == null) {
+      this.sharedFlow[eventOrGroup] = <String, dynamic>{};
+    }
+
+    // in case of a group, null value is expected
+    this.sharedFlow[eventOrGroup][actionOrGroupId] = paramValues;
+
+    this.notifyListeners();
   }
 
-  //
-  // Flow
-  //
+  void addLocalFlowStep(String eventOrGroup, String actionOrGroupId, { Map<String, String> paramValues }) {
+    if (this.localFlow[eventOrGroup] == null) {
+      this.localFlow[eventOrGroup] = <String, dynamic>{};
+    }
+
+    // in case of a group, null value is expected
+    this.localFlow[eventOrGroup][actionOrGroupId] = paramValues;
+
+    this.saveLocalFlow();
+
+    this.notifyListeners();
+  }
+
+  void addGroup(String id) {
+    this.sharedFlow = this.sharedFlow ?? {};
+
+    this.sharedFlow[id] = null;
+    this.notifyListeners();
+  }
 
   void applySharedFlow(LinkedHashMap<String, List<BehaviorStep>> board) {
-    Map<String, dynamic> newFlow = Map();
-
-    board.forEach((eventOrGroup, steps) {
-      newFlow[eventOrGroup] = Map();
-
-      steps.forEach((step) {
-        switch(step.type) {
-          case BehaviorStepType.action:
-            newFlow[eventOrGroup][step.id] = Map();
-
-            if (step.params != null) {
-              step.params.forEach((param, value) {
-                newFlow[eventOrGroup][step.id][param] = value;
-              });
-            } else {
-              newFlow[eventOrGroup][step.id] = null;
-            }
-
-            break;
-          case BehaviorStepType.group:
-            newFlow[eventOrGroup][step.id] = null;
-            break;
-          default:
-            break;
-        }
-      });
-    });
-
-    this.send('flowUpdate', data: newFlow);
+    this.send('flowUpdate', data: this.sharedFlow);
   }
 
   BehaviorStepType determineStepType(String id) {
@@ -172,6 +199,7 @@ class S with ChangeNotifier {
     if (this.isCodedData(evt, 2)) this.connectionRejected(evt);
     if (this.isCodedData(evt, 3)) this.flowLoaded(evt);
     if (this.isCodedData(evt, 6)) this.modulesLoaded(evt);
+    if (this.isCodedData(evt, 10)) this.defaultLocalFlowLoaded(evt);
   }
 
   void connectionAccepted(evt) {
@@ -181,6 +209,7 @@ class S with ChangeNotifier {
 
     this.send('flowLoad');
     this.send('modulesLoad');
+    this.loadLocalFlow();
   }
 
   void connectionRejected(evt) {
@@ -189,6 +218,11 @@ class S with ChangeNotifier {
 
   void flowLoaded(evt) {
     this.sharedFlow = evt['data']['data'];
+  }
+
+  void defaultLocalFlowLoaded(evt) {
+    this.localFlow = evt['data']['data'];
+    this.notifyListeners();
   }
 
   void modulesLoaded(evt) {

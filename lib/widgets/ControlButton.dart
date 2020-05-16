@@ -7,10 +7,8 @@ import '../screens/Controls.dart';
 class ControlButton extends StatefulWidget {
   String title;
   String id;
-  ControlsScreenState screenState;
 
-
-  ControlButton({Key key, this.title, this.id, this.screenState }) : super(key: key);
+  ControlButton({Key key, this.title, this.id }) : super(key: key);
 
   @override
   _ControlButtonState createState() => _ControlButtonState();
@@ -69,10 +67,6 @@ class _ControlButtonState extends State<ControlButton> {
               icon: Icon(Icons.clear, size: 40),
               onPressed: () {
                 S().confirm(context, 'Do you wish to remove this button?', () {
-                  this.widget.screenState.setState(() {
-                    this.widget.screenState.tiles.remove(this.widget);
-                  });
-
                   S().removeLocalEvent(this.widget.id);
                 });
               },

@@ -152,11 +152,23 @@ class _AttachActionOrGroupDialogState extends State<AttachActionOrGroupDialog> {
             if (this.selectedActionOrGroup != null) {
               Map <String, dynamic> params = this.getActionParams();
 
-              if (params != null) {
-                S().addFlowStep(this.widget.eventOrGroup, this.selectedActionOrGroup, paramValues: this.paramValues);
+              if (S().localFlow.containsKey(this.widget.eventOrGroup)) {
+                // this action is to be attached to a local event
+                if (params != null) {
+                  S().addLocalFlowStep(this.widget.eventOrGroup, this.selectedActionOrGroup, paramValues: this.paramValues);
+                } else {
+                  S().addLocalFlowStep(this.widget.eventOrGroup, this.selectedActionOrGroup);
+                }
               } else {
-                S().addFlowStep(this.widget.eventOrGroup, this.selectedActionOrGroup);
+                // this action is to be attached to a shared event or group
+                if (params != null) {
+                  S().addSharedFlowStep(this.widget.eventOrGroup, this.selectedActionOrGroup, paramValues: this.paramValues);
+                } else {
+                  S().addSharedFlowStep(this.widget.eventOrGroup, this.selectedActionOrGroup);
+                }
               }
+
+              Navigator.of(context).pop();
             }
           }
         )

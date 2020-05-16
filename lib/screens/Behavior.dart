@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import 'package:smarthome_pad/utils/enums.dart';  
 
 import '../utils/BehaviorStep.dart';
-import '../widgets/BehaviorRow.dart';
 import '../widgets/Menu.dart';
 import '../Store.dart';
 import '../widgets/BehaviorStepCard.dart';
@@ -19,12 +18,12 @@ class BehaviorScreen extends StatefulWidget {
   final double tileWidth = 200;
 
   @override
-  _BehaviorScreenState createState() => _BehaviorScreenState();
+  BehaviorScreenState createState() => BehaviorScreenState();
 }
 
-class _BehaviorScreenState extends State<BehaviorScreen> {
-  LinkedHashMap<String, List<BehaviorStep>> board;
-  LinkedHashMap<String, List<BehaviorStep>> localBoard;
+class BehaviorScreenState extends State<BehaviorScreen> {
+  LinkedHashMap<String, List<BehaviorStep>> board = LinkedHashMap();
+  LinkedHashMap<String, List<BehaviorStep>> localBoard = LinkedHashMap();
 
   @override
   Widget build(BuildContext context) {
@@ -34,13 +33,31 @@ class _BehaviorScreenState extends State<BehaviorScreen> {
       provider.sharedFlow.forEach((String eventOrGroup, dynamic steps) {
         board[eventOrGroup] = <BehaviorStep>[];
 
-        steps.forEach((String step, dynamic parameters) {
-          if (parameters is Map) {
-            board[eventOrGroup].add(BehaviorStep(id: step, listId: eventOrGroup, params: parameters));
-          } else {
-            board[eventOrGroup].add(BehaviorStep(id: step, listId: eventOrGroup));
-          }
-        });
+        if (steps != null) {
+          steps.forEach((String step, dynamic parameters) {
+            if (parameters is Map) {
+              board[eventOrGroup].add(BehaviorStep(id: step, listId: eventOrGroup, params: parameters));
+            } else {
+              board[eventOrGroup].add(BehaviorStep(id: step, listId: eventOrGroup));
+            }
+          });
+        }
+      });
+    }
+
+    if (provider.localFlow != null) {
+      provider.localFlow.forEach((String event, dynamic steps) {
+        localBoard[event] = <BehaviorStep>[];
+
+        if (steps != null) {
+          steps.forEach((String step, dynamic parameters) {
+            if (parameters is Map) {
+              localBoard[event].add(BehaviorStep(id: step, listId: event, params: parameters));
+            } else {
+              localBoard[event].add(BehaviorStep(id: step, listId: event));
+            }
+          });
+        }
       });
     }
 
@@ -50,7 +67,7 @@ class _BehaviorScreenState extends State<BehaviorScreen> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            buildHeader(listId),
+            buildHeader(listId, flowType: flowType),
             SizedBox(
               width: MediaQuery.of(context).size.width,
               height: 80,
@@ -65,27 +82,23 @@ class _BehaviorScreenState extends State<BehaviorScreen> {
                           // A stack that provides:
                           // * A draggable object
                           // * An area for incoming draggables
+
+                          BehaviorStepCard card = BehaviorStepCard(
+                            id: items[index].id,
+                            step: items[index],
+                          );
+
                           return Stack(
                             children: [
                               LongPressDraggable<BehaviorStep>(
                                 data: items[index],
-                                child: BehaviorRow(
-                                  item: items[index],
-                                ), // A card waiting to be dragged
+                                child: card, // A card waiting to be dragged
                                 childWhenDragging: Opacity(
                                   // The card that's left behind
                                   opacity: 0.2,
-                                  child: BehaviorRow(item: items[index]),
+                                  child: card,
                                 ),
-                                feedback: Container(
-                                  // A card floating around
-                                  height: widget.tileHeight,
-                                  width: widget.tileWidth,
-                                  child: FloatingWidget(
-                                      child: BehaviorRow(
-                                    item: items[index],
-                                  )),
-                                ),
+                                feedback: card
                               ),
                               buildItemDragTarget(listId, index, widget.tileHeight),
                             ],
@@ -110,7 +123,7 @@ class _BehaviorScreenState extends State<BehaviorScreen> {
                               showDialog(
                                 context: context,
                                 child: AttachActionOrGroupDialog(
-                                  eventOrGroup: listId
+                                  eventOrGroup: listId,
                                 )
                               );
                             }, 
@@ -147,7 +160,7 @@ class _BehaviorScreenState extends State<BehaviorScreen> {
                   onPressed: () {
                     showDialog(
                       context: context,
-                      child: AddEventDialog(flowType: FlowType.Shared)
+                      child: AddEventDialog()
                     );
                   }
                 ),
@@ -158,7 +171,7 @@ class _BehaviorScreenState extends State<BehaviorScreen> {
                     onPressed: () {
                       showDialog(
                         context: context,
-                        child: AddGroupDialog(flowType: FlowType.Shared)
+                        child: AddGroupDialog(/*flowType: FlowType.Shared*/)
                       );
                     }
                   ),
@@ -174,7 +187,7 @@ class _BehaviorScreenState extends State<BehaviorScreen> {
               ],
             ),
           ),
-          Container(
+          if (S().sharedFlow != null) Container(
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Column(
@@ -194,13 +207,20 @@ class _BehaviorScreenState extends State<BehaviorScreen> {
                               color: Colors.blueGrey[600] 
                             ),
                           ),
-                          buildKanbanList(key, board[key], flowType: FlowType.Shared)
+                          buildKanbanList(key, board[key])
                         ]
                       )
                     ),
                   );
                 }).toList()
               ),
+            ),
+          ),
+          if (S().sharedFlow == null) Container(
+            alignment: Alignment.topCenter,
+            margin: EdgeInsets.only(top: 20),
+            child: Text('No shared behavior has been defined yet. Start by adding an event or action group.',
+              style: TextStyle(color: Colors.grey[800])
             ),
           ),
           Container(
@@ -215,37 +235,59 @@ class _BehaviorScreenState extends State<BehaviorScreen> {
                   style: Theme.of(context).textTheme.headline1,
                 ),
                 Spacer(),
-                /*RaisedButton(
-                  child: Text('Add Event'),
-                  onPressed: () {
-                    showDialog(
-                      context: context,
-                      child: AddEventDialog(flowType: FlowType.Local)
-                    );
-                  }
-                ),
-                Padding(
-                  padding: EdgeInsets.only(left: 10, right: 10),
-                    child: RaisedButton(
-                    child: Text('Add Action Group'),
-                    onPressed: () {
-                      showDialog(
-                        context: context,
-                        child: AddGroupDialog(flowType: FlowType.Local)
-                      );
-                    }
-                  ),
-                ),*/
                 RaisedButton(
-                  child: Text('Apply'),
+                  child: Text('Save as Default'),
                   onPressed: () {
-                    S().confirm(context, 'Do you really wish to update the local system behavior?', () {
-                      S().applySharedFlow(this.board);
+                    S().confirm(context, 'Do you really wish to save this behavior as default local? When the user interface is loaded on a new device, this behavior will be automatically loaded.', () {
+                      S().saveDefaultLocalFlow();
                     });
                   }
                 ),
                 ],
               ),
+            ),
+          ),
+          if (S().localFlow != null) Container(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: localBoard.keys.map((String key) {
+                  return Container(
+                    width: MediaQuery.of(context).size.width,
+                    child: Container(
+                      margin: EdgeInsets.only(top: 10, left: 10),
+                      child: Stack(
+                        children: [
+                          Container(
+                            width: MediaQuery.of(context).size.width,
+                            height: 60,
+                            margin: EdgeInsets.only(top: 10),
+                            decoration: BoxDecoration(
+                              color: Colors.blueGrey[600] 
+                            ),
+                          ),
+                          buildKanbanList(key, localBoard[key], flowType: FlowType.Local)
+                        ]
+                      )
+                    ),
+                  );
+                }).toList()
+              ),
+            ),
+          ),
+          if (S().localFlow == null) Container(
+            alignment: Alignment.topCenter,
+            margin: EdgeInsets.only(top: 20),
+            child: Text('No local behavior has been defined yet. Start by adding a button in the Controls screen.',
+              style: TextStyle(color: Colors.grey[800])
+            ),
+          ),
+          if (S().localFlow.isEmpty) Container(
+            alignment: Alignment.topCenter,
+            margin: EdgeInsets.only(top: 20),
+            child: Text('No local behavior has been defined yet. Start by adding a button in the Controls screen.',
+              style: TextStyle(color: Colors.grey[800])
             ),
           ),
         ],
@@ -298,7 +340,10 @@ class _BehaviorScreenState extends State<BehaviorScreen> {
               ...data.map((BehaviorStep item) {
                 return Opacity(
                   opacity: 0.5,
-                  child: BehaviorRow(item: item),
+                  child: BehaviorStepCard(
+                    id: item.id,
+                    step: item
+                  ),
                 );
               }).toList()
             ],
@@ -308,8 +353,11 @@ class _BehaviorScreenState extends State<BehaviorScreen> {
     );
   }
 
-  buildHeader(String listId) {
-    Widget header = BehaviorStepCard(id: listId);
+  buildHeader(String listId, { FlowType flowType }) {
+    Widget header = BehaviorStepCard(
+      id: listId,
+      isLocalEvent: (flowType == FlowType.Local) ? true : false,
+    );
 
     return Stack(
       // The header
@@ -322,13 +370,7 @@ class _BehaviorScreenState extends State<BehaviorScreen> {
             opacity: 0.2,
             child: header,
           ),
-          feedback: FloatingWidget(
-            child: Container(
-              // A header floating around
-              width: widget.tileWidth,
-              child: header,
-            ),
-          ),
+          feedback: header,
         ),
         buildItemDragTarget(listId, 0, widget.headerHeight),
         DragTarget<String>(
@@ -390,7 +432,7 @@ class FloatingWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Transform.rotate(
-      angle: 0.1,
+      angle: 0.05,
       child: child,
     );
   }

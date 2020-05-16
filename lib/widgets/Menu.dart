@@ -80,7 +80,7 @@ class _MenuState extends State<Menu> {
                         this.headlessMode = value;
                       });
 
-                      S().setPers('headless-mode', value.toString());
+                      S().turnHeadlessOn(value);
                     },
                   ),
                   Text('Clean Mode',

@@ -52,9 +52,11 @@ class ControlsScreenState extends State<ControlsScreen> {
   Widget build(BuildContext context) {
     S provider = Provider.of<S>(context);
 
-    if (provider.localEvents != null) {
-      provider.localEvents.forEach((eventId) {
-        this.tiles.add(ControlButton(title: eventId.titleCase, id: eventId, screenState: this));
+    this.tiles = [];
+
+    if (provider.localFlow != null) {
+      provider.localFlow.forEach((String event, dynamic steps) {
+        this.tiles.add(ControlButton(title: event.titleCase, id: event));
       });
     }
 
@@ -66,8 +68,8 @@ class ControlsScreenState extends State<ControlsScreen> {
       onReorder: (int oldIndex, int newIndex) {
         ControlButton tile = tiles[oldIndex];
 
-        S().localEvents.removeAt(oldIndex);
-        S().localEvents.insert(newIndex, tile.id);
+        //S().localEvents.removeAt(oldIndex);
+        //S().localEvents.insert(newIndex, tile.id);
 
         /*setState(() {
           Widget row = tiles.removeAt(oldIndex);

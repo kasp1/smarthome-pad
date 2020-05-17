@@ -47,15 +47,17 @@ class S with ChangeNotifier {
 
   void triggerLocalEvent(String id) {
     this.localFlow.forEach((String event, steps) {
-      if (steps != null) {
-        steps.forEach((String actionOrGroup, params) {
-          this.send('doStep', data: {
-            'step': actionOrGroup,
-            'params': params
+      if (event == id) {
+        if (steps != null) {
+          steps.forEach((String actionOrGroup, params) {
+            this.send('doStep', data: {
+              'step': actionOrGroup,
+              'params': params
+            });
           });
-        });
-      } else {
-        print('Local event ' + id + " triggered, but there's nothing to do.");
+        } else {
+          print('Local event ' + id + " triggered, but there's nothing to do.");
+        }
       }
     });
   }
@@ -138,6 +140,31 @@ class S with ChangeNotifier {
 
   void applySharedFlow(LinkedHashMap<String, List<BehaviorStep>> board) {
     this.send('flowUpdate', data: this.sharedFlow);
+  }
+
+  void removeSharedEventOrGroupDefinition(String id) {
+    print('Removing a shared event or group definiton: ' + id);
+    this.sharedFlow.remove(id);
+
+    print(this.sharedFlow);
+
+    this.notifyListeners();
+  }
+
+  void removeSharedActionOrGroupCall(String eventOrGroup, String id) {
+    print('Removing a shared action or group call: ' + id + ' from ' + eventOrGroup);
+
+    this.sharedFlow[eventOrGroup].remove(id);
+
+    this.notifyListeners();
+  }
+
+  void removeLocalActionOrGroupCall(String event, String id) {
+    print('Removing a local action or group call: ' + id + ' from ' + event);
+
+    this.localFlow[event].remove(id);
+
+    this.notifyListeners();
   }
 
   BehaviorStepType determineStepType(String id) {

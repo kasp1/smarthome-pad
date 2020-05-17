@@ -126,6 +126,7 @@ class ControlsScreenState extends State<ControlsScreen> {
                           if (buttonTitleController.text.isNotEmpty) {
                             Navigator.of(context).pop();
                             S().addLocalEvent(buttonTitleController.text.pascalCase);
+                            this.buttonTitleController.text = '';
                           }
                         },
                       ),

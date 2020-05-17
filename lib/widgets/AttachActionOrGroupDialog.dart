@@ -19,9 +19,13 @@ class _AttachActionOrGroupDialogState extends State<AttachActionOrGroupDialog> {
 
   // ! only usable if S().determineStepType(this.selectedActionOrGroup) == BehaviorStepType.action
   Map <String, dynamic> getActionParams() {
-    String moduleId = this.selectedActionOrGroup.split('_')[0];
-    String action = this.selectedActionOrGroup.split('_')[1];
-    return S().modules[moduleId]['actions'][action]['params'];
+    if (S().determineStepType(this.selectedActionOrGroup) == BehaviorStepType.action) {
+      String moduleId = this.selectedActionOrGroup.split('_')[0];
+      String action = this.selectedActionOrGroup.split('_')[1];
+      return S().modules[moduleId]['actions'][action]['params'];
+    } else {
+      return null;
+    }
   }
 
   @override

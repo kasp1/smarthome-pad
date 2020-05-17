@@ -226,9 +226,6 @@ class BehaviorScreenState extends State<BehaviorScreen> {
           Container(
             alignment: Alignment.centerLeft,
             margin: EdgeInsets.only(left: 12, top: 20, right: 10),
-            child: 
-          Container(
-            margin: EdgeInsets.only(left: 12, top: 20, right: 10),
             child: Row(
               children: [
                 Text('Local',
@@ -243,8 +240,7 @@ class BehaviorScreenState extends State<BehaviorScreen> {
                     });
                   }
                 ),
-                ],
-              ),
+              ],
             ),
           ),
           if (S().localFlow != null) Container(

@@ -46,7 +46,18 @@ class S with ChangeNotifier {
   }
 
   void triggerLocalEvent(String id) {
-    print('Local event triggered');
+    this.localFlow.forEach((String event, steps) {
+      if (steps != null) {
+        steps.forEach((String actionOrGroup, params) {
+          this.send('doStep', data: {
+            'step': actionOrGroup,
+            'params': params
+          });
+        });
+      } else {
+        print('Local event ' + id + " triggered, but there's nothing to do.");
+      }
+    });
   }
 
   void loadLocalFlow() {
@@ -172,7 +183,7 @@ class S with ChangeNotifier {
     });
   }
 
-  void send(String command, { Map<String, dynamic> data }) {
+  void send(String command, { dynamic data }) {
     Map<String, dynamic> request = {
       'command': command
     };

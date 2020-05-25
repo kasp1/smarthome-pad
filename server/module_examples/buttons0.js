@@ -55,7 +55,7 @@ let module = {
   },
 
   reconnect () {
-    log.i3(this.title, 'attempting a connection to the hardware module.', this.hwPort, this.hwAddress)
+    log.i3(this.title, 'attempting a connection to the hardware module.')
 
     try {
       this.connection.connect(this.hwPort, this.hwAddress)

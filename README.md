@@ -2,6 +2,8 @@
 
 A simple smart home behavior configurator.
 
+[<img src="screenshots/become-a-patron-button-1.png" width="200">](https://www.patreon.com/bePatron?u=5743048)
+
 # Installation
 
 ## Installing the server

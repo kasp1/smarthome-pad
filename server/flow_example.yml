@@ -1,0 +1,5 @@
+lights0_LivingRoomEntrySwitchOn:
+  TurnLivingRoomLightsOn:
+TurnLivingRoomLightsOn:
+  lights0_switch:
+    on: true

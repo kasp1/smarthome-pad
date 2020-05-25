@@ -107,7 +107,9 @@ class _ConnectScreenState extends State<ConnectScreen> {
                           },
                         ),
                         Text('Auto-reconnect',
-                          style: TextStyle(color: Colors.grey[800])
+                          style: TextStyle(
+                            color: this.autoReconnectChecked ? Colors.white : Colors.grey[800]
+                          )
                         )
                       ],
                     ),

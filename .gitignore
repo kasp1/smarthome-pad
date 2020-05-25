@@ -35,3 +35,10 @@ lib/generated_plugin_registrant.dart
 
 # Exceptions to above rules.
 !/packages/flutter_tools/test/data/dart_dependencies_test/**/.packages
+
+# server
+server/node_modules
+server/flow.yml
+server/modules
+server/config.yml
+server/defaultLocalFlow.yml

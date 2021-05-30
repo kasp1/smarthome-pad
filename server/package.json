@@ -9,7 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "ws": "^7.2.5",
+    "ws": "^7.4.6",
     "yaml": "^1.9.2"
   },
   "type": "module"
